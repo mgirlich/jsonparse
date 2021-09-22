@@ -18,6 +18,8 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 [![CRAN status](https://www.r-pkg.org/badges/version/jsonparse)](https://CRAN.R-project.org/package=jsonparse)
+[![Codecov test coverage](https://codecov.io/gh/mgirlich/jsonparse/branch/master/graph/badge.svg)](https://codecov.io/gh/mgirlich/jsonparse?branch=master)
+[![R-CMD-check](https://github.com/mgirlich/jsonparse/workflows/R-CMD-check/badge.svg)](https://github.com/mgirlich/jsonparse/actions)
 <!-- badges: end -->
 
 The goal of jsonparse is to ...
