@@ -1,6 +1,5 @@
 #define STRICT_R_HEADERS
 #include <cpp11.hpp>
-using namespace cpp11;
 
 #include "cpp11/simdjson.h"
 #include "cpp11/simdjson.cpp"
