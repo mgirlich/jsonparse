@@ -4,11 +4,11 @@
 
 using simdjson::ondemand::json_type;
 
-auto bad_json_type_message(simdjson::ondemand::value element, const std::string& expected, const std::string& path) {
-    return "Cannot convert a JSON " + json_type_to_string(element) + " to " + expected + " at path " + path;
+auto bad_json_type_message(simdjson::ondemand::value element, const std::string& expected, JSON_Path& path) {
+    return "Cannot convert a JSON " + json_type_to_string(element) + " to " + expected + " at path " + path.path();
 }
 
-int parse_scalar_bool(simdjson::ondemand::value element, const std::string& path) {
+int parse_scalar_bool(simdjson::ondemand::value element, JSON_Path& path) {
     switch (element.type()) {
     case json_type::null:
         return NA_LOGICAL;
@@ -21,7 +21,7 @@ int parse_scalar_bool(simdjson::ondemand::value element, const std::string& path
     }
 }
 
-int parse_scalar_int(simdjson::ondemand::value element, const std::string& path) {
+int parse_scalar_int(simdjson::ondemand::value element, JSON_Path& path) {
     switch (element.type()) {
     case json_type::number:
         // TODO this is unsafe; add handling of big integers
@@ -35,7 +35,7 @@ int parse_scalar_int(simdjson::ondemand::value element, const std::string& path)
     }
 }
 
-double parse_scalar_double(simdjson::ondemand::value element, const std::string& path) {
+double parse_scalar_double(simdjson::ondemand::value element, JSON_Path& path) {
     switch (element.type()) {
     case json_type::number:
         return static_cast<double>(element);
@@ -48,7 +48,7 @@ double parse_scalar_double(simdjson::ondemand::value element, const std::string&
     }
 }
 
-SEXPREC* parse_scalar_string(simdjson::ondemand::value element, const std::string& path) {
+SEXPREC* parse_scalar_string(simdjson::ondemand::value element, JSON_Path& path) {
     switch (element.type()) {
     case json_type::string:
         return Rf_mkChar(std::string(std::string_view(element)).c_str());
@@ -60,7 +60,7 @@ SEXPREC* parse_scalar_string(simdjson::ondemand::value element, const std::strin
         throw std::runtime_error(bad_json_type_message(element, "string", path));
     }
 }
-SEXP parse_homo_array_bool(simdjson::ondemand::value json, const std::string& path) {
+SEXP parse_homo_array_bool(simdjson::ondemand::value json, JSON_Path& path) {
     simdjson::ondemand::array array = safe_get_array(json, path);
 
     int n = array.count_elements();
@@ -76,7 +76,7 @@ SEXP parse_homo_array_bool(simdjson::ondemand::value json, const std::string& pa
     return val;
 }
 
-SEXP parse_homo_array_int(simdjson::ondemand::value json, const std::string& path) {
+SEXP parse_homo_array_int(simdjson::ondemand::value json, JSON_Path& path) {
     simdjson::ondemand::array array = safe_get_array(json, path);
 
     int n = array.count_elements();
@@ -92,7 +92,7 @@ SEXP parse_homo_array_int(simdjson::ondemand::value json, const std::string& pat
     return val;
 }
 
-SEXP parse_homo_array_double(simdjson::ondemand::value json, const std::string& path) {
+SEXP parse_homo_array_double(simdjson::ondemand::value json, JSON_Path& path) {
     simdjson::ondemand::array array = safe_get_array(json, path);
 
     int n = array.count_elements();
@@ -108,7 +108,7 @@ SEXP parse_homo_array_double(simdjson::ondemand::value json, const std::string& 
     return val;
 }
 
-SEXP parse_homo_array_string(simdjson::ondemand::value json, const std::string& path) {
+SEXP parse_homo_array_string(simdjson::ondemand::value json, JSON_Path& path) {
     simdjson::ondemand::array array = safe_get_array(json, path);
 
     int n = array.count_elements();

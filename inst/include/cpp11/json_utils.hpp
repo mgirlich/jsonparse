@@ -3,6 +3,7 @@
 
 #include "cpp11/simdjson.h"
 #include "cpp11/simdjson.cpp"
+#include "json_path.hpp"
 
 std::string json_type_to_string(simdjson::ondemand::value element) {
   using simdjson::ondemand::json_type;
@@ -28,21 +29,21 @@ std::string json_type_to_string(simdjson::ondemand::value element) {
   }
 }
 
-simdjson::ondemand::array safe_get_array(simdjson::ondemand::value json, const std::string& path) {
+simdjson::ondemand::array safe_get_array(simdjson::ondemand::value json, JSON_Path& path) {
   simdjson::ondemand::array array;
   auto error = json.get_array().get(array);
   if (error) {
-    cpp11::stop("Element at path " + path + " is not an array.");
+    cpp11::stop("Element at path " + path.path() + " is not an array.");
   }
 
   return array;
 }
 
-simdjson::ondemand::object safe_get_object(simdjson::ondemand::value json, const std::string& path) {
+simdjson::ondemand::object safe_get_object(simdjson::ondemand::value json, JSON_Path& path) {
   simdjson::ondemand::object object;
   auto error = json.get_object().get(object);
   if (error) {
-    cpp11::stop("Element at path " + path + " is not an object.");
+    cpp11::stop("Element at path " + path.path() + " is not an object.");
   }
 
   return object;

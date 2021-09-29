@@ -14,26 +14,28 @@ context("parse_scalar") {
   }  )"_padded;
   auto doc = parser.iterate(json);
 
+  auto p = JSON_Path();
+
   test_that("can parse a scalar bool") {
-    expect_true(parse_scalar_bool(doc["lgl_true"].value(), "") == 1);
-    expect_true(parse_scalar_bool(doc["lgl_false"].value(), "") == 0);
-    expect_true(parse_scalar_bool(doc["lgl_null"].value(), "") == NA_LOGICAL);
+    expect_true(parse_scalar_bool(doc["lgl_true"].value(), p) == 1);
+    expect_true(parse_scalar_bool(doc["lgl_false"].value(), p) == 0);
+    expect_true(parse_scalar_bool(doc["lgl_null"].value(), p) == NA_LOGICAL);
   }
 
   test_that("can parse a scalar integer") {
-    expect_true(parse_scalar_int(doc["int_1"].value(), "") == 1);
-    expect_true(parse_scalar_int(doc["int_null"].value(), "") == NA_INTEGER);
+    expect_true(parse_scalar_int(doc["int_1"].value(), p) == 1);
+    expect_true(parse_scalar_int(doc["int_null"].value(), p) == NA_INTEGER);
   }
 
   test_that("can parse a scalar double") {
-    expect_true(parse_scalar_double(doc["dbl_1.5"].value(), "") == 1.5);
-    expect_true(cpp11::is_na(parse_scalar_double(doc["dbl_null"].value(), "")));
+    expect_true(parse_scalar_double(doc["dbl_1.5"].value(), p) == 1.5);
+    expect_true(cpp11::is_na(parse_scalar_double(doc["dbl_null"].value(), p)));
   }
 
   test_that("can parse a scalar integer") {
-    expect_true(cpp11::r_string(parse_scalar_string(doc["str_empty"].value(), "")) == "");
-    expect_true(cpp11::r_string(parse_scalar_string(doc["str_abc"].value(), "")) == "abc");
-    expect_true(parse_scalar_string(doc["str_null"].value(), "") == NA_STRING);
+    expect_true(cpp11::r_string(parse_scalar_string(doc["str_empty"].value(), p)) == "");
+    expect_true(cpp11::r_string(parse_scalar_string(doc["str_abc"].value(), p)) == "abc");
+    expect_true(parse_scalar_string(doc["str_null"].value(), p) == NA_STRING);
   }
 }
 
@@ -48,29 +50,31 @@ context("parse_homo_array") {
   }  )"_padded;
   auto doc = parser.iterate(json);
 
+  auto p = JSON_Path();
+
   test_that("can parse an array of bools") {
-    cpp11::logicals x = parse_homo_array_bool(doc["lgl"].value(), "");
+    cpp11::logicals x = parse_homo_array_bool(doc["lgl"].value(), p);
     expect_true(x[0] == true);
     expect_true(x[1] == NA_LOGICAL);
     expect_true(x[2] == false);
   }
 
   test_that("can parse an array of ints") {
-    cpp11::integers x = parse_homo_array_int(doc["int"].value(), "");
+    cpp11::integers x = parse_homo_array_int(doc["int"].value(), p);
     expect_true(x[0] == 1);
     expect_true(x[1] == NA_INTEGER);
     expect_true(x[2] == 2);
   }
 
   test_that("can parse an array of doubles") {
-    cpp11::doubles x = parse_homo_array_double(doc["dbl"].value(), "");
+    cpp11::doubles x = parse_homo_array_double(doc["dbl"].value(), p);
     expect_true(x[0] == 1.5);
     expect_true(cpp11::is_na(x[1]));
     expect_true(x[2] == -1.5);
   }
 
   test_that("can parse an array of strings") {
-    cpp11::strings x = parse_homo_array_string(doc["str"].value(), "");
+    cpp11::strings x = parse_homo_array_string(doc["str"].value(), p);
     expect_true(x[0] == "");
     expect_true(x[1] == NA_STRING);
     expect_true(x[2] == "abc");
