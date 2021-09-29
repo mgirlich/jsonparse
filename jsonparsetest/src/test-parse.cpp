@@ -53,28 +53,28 @@ context("parse_homo_array") {
   auto p = JSON_Path();
 
   test_that("can parse an array of bools") {
-    cpp11::logicals x = parse_homo_array_bool(doc["lgl"].value(), p);
+    cpp11::logicals x = parse_homo_array<bool>(doc["lgl"].value(), p);
     expect_true(x[0] == true);
     expect_true(x[1] == NA_LOGICAL);
     expect_true(x[2] == false);
   }
 
   test_that("can parse an array of ints") {
-    cpp11::integers x = parse_homo_array_int(doc["int"].value(), p);
+    cpp11::integers x = parse_homo_array<int>(doc["int"].value(), p);
     expect_true(x[0] == 1);
     expect_true(x[1] == NA_INTEGER);
     expect_true(x[2] == 2);
   }
 
   test_that("can parse an array of doubles") {
-    cpp11::doubles x = parse_homo_array_double(doc["dbl"].value(), p);
+    cpp11::doubles x = parse_homo_array<double>(doc["dbl"].value(), p);
     expect_true(x[0] == 1.5);
     expect_true(cpp11::is_na(x[1]));
     expect_true(x[2] == -1.5);
   }
 
   test_that("can parse an array of strings") {
-    cpp11::strings x = parse_homo_array_string(doc["str"].value(), p);
+    cpp11::strings x = parse_homo_array<std::string>(doc["str"].value(), p);
     expect_true(x[0] == "");
     expect_true(x[1] == NA_STRING);
     expect_true(x[2] == "abc");

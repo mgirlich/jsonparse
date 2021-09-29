@@ -8,6 +8,9 @@ auto bad_json_type_message(simdjson::ondemand::value element, const std::string&
     return "Cannot convert a JSON " + json_type_to_string(element) + " to " + expected + " at path " + path.path();
 }
 
+// Cannot use template function because
+// * `parse_scalar_*()` have different return types
+// * C++ 11 doesn't support the auto return type
 int parse_scalar_bool(simdjson::ondemand::value element, JSON_Path& path) {
     switch (element.type()) {
     case json_type::null:
@@ -60,7 +63,12 @@ SEXPREC* parse_scalar_string(simdjson::ondemand::value element, JSON_Path& path)
         throw std::runtime_error(bad_json_type_message(element, "string", path));
     }
 }
-SEXP parse_homo_array_bool(simdjson::ondemand::value json, JSON_Path& path) {
+
+template <typename T>
+SEXP parse_homo_array(simdjson::ondemand::value json, JSON_Path& path);
+
+template <>
+SEXP parse_homo_array<bool>(simdjson::ondemand::value json, JSON_Path& path) {
     simdjson::ondemand::array array = safe_get_array(json, path);
 
     int n = array.count_elements();
@@ -76,7 +84,8 @@ SEXP parse_homo_array_bool(simdjson::ondemand::value json, JSON_Path& path) {
     return val;
 }
 
-SEXP parse_homo_array_int(simdjson::ondemand::value json, JSON_Path& path) {
+template<>
+SEXP parse_homo_array<int>(simdjson::ondemand::value json, JSON_Path& path) {
     simdjson::ondemand::array array = safe_get_array(json, path);
 
     int n = array.count_elements();
@@ -92,7 +101,8 @@ SEXP parse_homo_array_int(simdjson::ondemand::value json, JSON_Path& path) {
     return val;
 }
 
-SEXP parse_homo_array_double(simdjson::ondemand::value json, JSON_Path& path) {
+template<>
+SEXP parse_homo_array<double>(simdjson::ondemand::value json, JSON_Path& path) {
     simdjson::ondemand::array array = safe_get_array(json, path);
 
     int n = array.count_elements();
@@ -108,7 +118,8 @@ SEXP parse_homo_array_double(simdjson::ondemand::value json, JSON_Path& path) {
     return val;
 }
 
-SEXP parse_homo_array_string(simdjson::ondemand::value json, JSON_Path& path) {
+template<>
+SEXP parse_homo_array<std::string>(simdjson::ondemand::value json, JSON_Path& path) {
     simdjson::ondemand::array array = safe_get_array(json, path);
 
     int n = array.count_elements();
