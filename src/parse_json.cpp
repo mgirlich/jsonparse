@@ -3,7 +3,7 @@
 #include "cpp11/R.hpp"
 
 #if __cplusplus >= 201703L
-#include <cpp11/parse.hpp>
+#include <cpp11/parser_class.hpp>
 #endif
 
 
