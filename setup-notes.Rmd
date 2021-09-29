@@ -1,0 +1,35 @@
+---
+title: "Setup notes"
+author: "Maximilian Girlich"
+date: "9/29/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Compilation Setup
+
+* `Makevars.win` and `Makevars.in`
+* `configure` -> get the C++17 location and create `src/Makevars` (basically, it should work with C++11 but I didn't yet figure out how).
+* `cleanup` -> clean up intermediate compilation files
+* make `configure` and `cleanup` executable
+
+## C++ Tests
+
+* Run [`use_catch()`](https://testthat.r-lib.org/reference/use_catch.html) to setup testthat for C++
+* Run `usethis::use_package("xml2", "Suggests")`
+* Run `usethis::use_package("testthat", "LinkingTo")`
+* Create `jsonparse-package.R` and add
+
+```{R}
+# The following block is used by usethis to automatically manage
+# roxygen namespace tags. Modify with care!
+## usethis namespace: start
+#' @useDynLib jsonparse, .registration = TRUE
+## usethis namespace: end
+NULL
+```
+
+to have `useDynLib(jsonparse, .registration = TRUE)` in the `NAMESPACE` file.
