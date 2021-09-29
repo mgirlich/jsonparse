@@ -14,12 +14,8 @@ extern "C" SEXP _jsonparse_parse_json(SEXP json, SEXP spec) {
 }
 
 extern "C" {
-/* .Call calls */
-extern SEXP run_testthat_tests(SEXP);
-
 static const R_CallMethodDef CallEntries[] = {
     {"_jsonparse_parse_json", (DL_FUNC) &_jsonparse_parse_json, 2},
-    {"run_testthat_tests",    (DL_FUNC) &run_testthat_tests,    1},
     {NULL, NULL, 0}
 };
 }

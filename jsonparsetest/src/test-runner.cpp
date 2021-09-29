@@ -4,5 +4,4 @@
  * available in your package.
  */
 #define TESTTHAT_TEST_RUNNER
-#define CATCH_CONFIG_RUNNER
 #include <testthat.h>
