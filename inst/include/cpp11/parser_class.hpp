@@ -1,3 +1,5 @@
+#pragma once
+
 #define STRICT_R_HEADERS
 #include "cpp11.hpp"
 #include "cpp11/R.hpp"

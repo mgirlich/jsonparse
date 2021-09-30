@@ -1,11 +1,12 @@
+#pragma once
+
 #define STRICT_R_HEADERS
 #include <cpp11.hpp>
 
 #include "cpp11/simdjson.h"
-#include "cpp11/simdjson.cpp"
 #include "json_path.hpp"
 
-std::string json_type_to_string(simdjson::ondemand::value element) {
+inline std::string json_type_to_string(simdjson::ondemand::value element) {
   using simdjson::ondemand::json_type;
   switch (element.type()) {
   case json_type::null:
@@ -29,7 +30,7 @@ std::string json_type_to_string(simdjson::ondemand::value element) {
   }
 }
 
-simdjson::ondemand::array safe_get_array(simdjson::ondemand::value json, JSON_Path& path) {
+inline simdjson::ondemand::array safe_get_array(simdjson::ondemand::value json, JSON_Path& path) {
   simdjson::ondemand::array array;
   auto error = json.get_array().get(array);
   if (error) {
@@ -39,7 +40,7 @@ simdjson::ondemand::array safe_get_array(simdjson::ondemand::value json, JSON_Pa
   return array;
 }
 
-simdjson::ondemand::object safe_get_object(simdjson::ondemand::value json, JSON_Path& path) {
+inline simdjson::ondemand::object safe_get_object(simdjson::ondemand::value json, JSON_Path& path) {
   simdjson::ondemand::object object;
   auto error = json.get_object().get(object);
   if (error) {
@@ -49,7 +50,7 @@ simdjson::ondemand::object safe_get_object(simdjson::ondemand::value json, JSON_
   return object;
 }
 
-std::string safe_get_key(simdjson::simdjson_result<simdjson::ondemand::field> field) {
+inline std::string safe_get_key(simdjson::simdjson_result<simdjson::ondemand::field> field) {
   std::string_view key_v;
   auto error = field.unescaped_key().get(key_v);
   if (error) {

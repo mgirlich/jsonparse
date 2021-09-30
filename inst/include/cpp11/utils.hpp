@@ -1,10 +1,12 @@
+#pragma once
+
 #define STRICT_R_HEADERS
 #include "cpp11.hpp"
 #include "cpp11/R.hpp"
 
 #include <vector>
 
-SEXP new_named_list(std::vector<std::string> nms) {
+inline SEXP new_named_list(std::vector<std::string> nms) {
     int n_fields = nms.size();
     SEXP out = PROTECT(Rf_allocVector(VECSXP, n_fields));
 
@@ -21,7 +23,7 @@ SEXP new_named_list(std::vector<std::string> nms) {
     return out;
 }
 
-SEXP new_df(std::vector<std::string> col_nms, int n_rows) {
+inline SEXP new_df(std::vector<std::string> col_nms, int n_rows) {
     SEXP out = new_named_list(col_nms);
 
     // add row.names attribute
@@ -42,7 +44,7 @@ SEXP new_df(std::vector<std::string> col_nms, int n_rows) {
     return out;
 }
 
-int name_to_index(std::vector<std::string> haystack, std::string needle) {
+inline int name_to_index(std::vector<std::string> haystack, std::string needle) {
     int index = 0;
     for (auto hay : haystack) {
         if (hay == needle) {
