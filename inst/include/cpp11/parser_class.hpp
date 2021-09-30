@@ -57,6 +57,7 @@ public:
 
 template <typename T>
 class Parser_HomoArray : public virtual Parser {
+public:
   inline SEXP parse_json(simdjson::ondemand::value json, JSON_Path& path) {
     return parse_homo_array<T>(json, path);
   }
