@@ -103,3 +103,82 @@ context("Parser_HomoArray") {
     expect_true(x[2] == "abc");
   }
 }
+
+context("Parser_Object") {
+  using namespace simdjson;
+  using namespace cpp11;
+
+  auto json = R"(  {
+    "lgl": true,
+    "int": 1,
+    "dbl": 1.5,
+    "str": "abc",
+    "lgl_vec": [true, null, false],
+    "int_vec": [1, null, 2],
+    "dbl_vec": [1.5, null, -1.5],
+    "str_vec": ["", null, "abc"]
+  }  )"_padded;
+
+  std::unordered_map<std::string, std::unique_ptr<Parser>> fields;
+  fields["lgl"] = std::make_unique<Parser_Scalar<bool>>();
+  fields["int"] = std::make_unique<Parser_Scalar<int>>();
+  fields["dbl"] = std::make_unique<Parser_Scalar<double>>();
+  fields["str"] = std::make_unique<Parser_Scalar<std::string>>();
+
+  fields["lgl_vec"] = std::make_unique<Parser_HomoArray<bool>>();
+  fields["int_vec"] = std::make_unique<Parser_HomoArray<int>>();
+  fields["dbl_vec"] = std::make_unique<Parser_HomoArray<double>>();
+  fields["str_vec"] = std::make_unique<Parser_HomoArray<std::string>>();
+
+  std::unordered_map<std::string, SEXP> default_values;
+  default_values["lgl"] = Rf_ScalarLogical(false);
+  default_values["int"] = Rf_ScalarInteger(-1);
+  default_values["dbl"] = Rf_ScalarReal(-1.5);
+  default_values["str"] = Rf_mkChar("xyz");
+
+  default_values["lgl_vec"] = cpp11::logicals({false, false});
+  default_values["int_vec"] = cpp11::integers({-1, -2});
+  default_values["dbl_vec"] = cpp11::doubles({-1.5, -2.5});
+  default_values["str_vec"] = cpp11::strings({"x", "y", "z"});
+
+  std::vector<std::string> field_order = std::vector<std::string>({
+    "lgl", "int", "dbl", "str",
+    "lgl_vec", "int_vec", "dbl_vec", "str_vec"
+  });
+
+
+  auto parser_ob = Parser_Object(fields, default_values, field_order);
+  auto path = JSON_Path();
+
+  ondemand::parser parser;
+  auto doc = parser.iterate(json);
+  simdjson::ondemand::value value = doc;
+  test_that("can parse an object") {
+    cpp11::list x = parser_ob.parse_json(value, path);
+    expect_true(as_cpp<bool>(x["lgl"]) == true);
+    expect_true(as_cpp<int>(x["int"]) == 1);
+    expect_true(as_cpp<double>(x["dbl"]) == 1.5);
+    expect_true(as_cpp<std::string>(x["str"]) == "abc");
+
+    expect_true(logicals(x["lgl_vec"]) == logicals({true, NA_LOGICAL, false}));
+    expect_true(integers(x["int_vec"]) == integers({1, NA_INTEGER, 2}));
+    expect_true(doubles(x["dbl_vec"]) == doubles({1.5, NA_REAL, -1.5}));
+    expect_true(strings(x["str_vec"]) == strings({"", NA_STRING, "abc"}));
+  }
+
+  auto json2 = R"(  {}   )"_padded;
+  auto doc2 = parser.iterate(json2);
+  simdjson::ondemand::value value2 = doc2;
+  test_that("uses `default_values` for missing fields") {
+    cpp11::list x = parser_ob.parse_json(value2, path);
+    expect_true(as_cpp<bool>(x["lgl"]) == false);
+    expect_true(as_cpp<int>(x["int"]) == -1);
+    expect_true(as_cpp<double>(x["dbl"]) == -1.5);
+    expect_true(as_cpp<std::string>(x["str"]) == "xyz");
+
+    expect_true(logicals(x["lgl_vec"]) == logicals({false, false}));
+    expect_true(integers(x["int_vec"]) == integers({-1, -2}));
+    expect_true(doubles(x["dbl_vec"]) == doubles({-1.5, -2.5}));
+    expect_true(strings(x["str_vec"]) == strings({"x", "y", "z"}));
+  }
+}

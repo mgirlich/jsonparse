@@ -49,15 +49,19 @@ public:
     path_elements.push_back(std::make_unique<JSON_Path_Element<int>>(index));
   }
 
-  void insert(std::string key) {
+  void insert(const std::string& key) {
     path_elements.push_back(std::make_unique<JSON_Path_Element<std::string>>(key));
+  }
+
+  void insert_dummy() {
+    this->insert(-1);
   }
 
   void replace(int index) {
     path_elements.back() = std::make_unique<JSON_Path_Element<int>>(index);
   }
 
-  void replace(std::string key) {
+  void replace(const std::string& key) {
     path_elements.back() = std::make_unique<JSON_Path_Element<std::string>>(key);
   }
 
