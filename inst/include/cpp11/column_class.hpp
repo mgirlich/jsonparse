@@ -5,15 +5,6 @@
 
 template <typename T>
 class Column_Scalar : public virtual Column {
-protected:
-  int default_val;
-  SEXP out;
-  int* out_data;
-public:
-  inline void add_default() {
-    *this->out_data = this->default_val;
-    ++this->out_data;
-  }
 };
 
 template <>
