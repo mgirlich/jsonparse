@@ -11,6 +11,18 @@
 #include <memory>
 #endif
 
+// defined here because it is needed in Parser_Dataframe
+class Column {
+public:
+  virtual ~Column() {};
+
+  // = 0 to declare the functions as pure virtual
+  virtual inline void reserve(int n) = 0;
+  virtual inline void add_value(simdjson::ondemand::value, JSON_Path& path) = 0;
+  virtual inline SEXP get_value() const = 0;
+  virtual inline void add_default() = 0;
+};
+
 class Parser {
 public:
   virtual ~Parser() {};
@@ -114,6 +126,77 @@ public:
         int index = name_to_index(this->field_order, it.first);
         SET_VECTOR_ELT(out, index, default_values[it.first]);
       }
+    }
+
+    return out;
+  }
+};
+
+
+
+class Parser_Dataframe : public virtual Parser{
+protected:
+  std::unordered_map<std::string, std::unique_ptr<Column>> cols;
+  std::unordered_map<std::string, bool> key_found;
+  std::vector<std::string> col_order;
+
+public:
+  Parser_Dataframe(std::unordered_map<std::string, std::unique_ptr<Column>>& cols,
+                   std::vector<std::string> col_order) {
+    for (auto & col : cols) {
+      this->cols.insert({col.first, std::move(col.second)});
+      this->key_found[col.first] = false;
+    }
+
+    for (auto nm : col_order) {
+      this->col_order.push_back(nm);
+    }
+  };
+
+  inline SEXP parse_json(simdjson::ondemand::value json, JSON_Path& path) {
+    simdjson::ondemand::array array = safe_get_array(json, path);
+
+    int size = array.count_elements();
+    for (auto & col : this->cols) {
+      (*this->cols[col.first]).reserve(size);
+      this->key_found[col.first] = false;
+    }
+
+    path.insert_dummy();
+    int n_rows = 0;
+    for (auto element : array) {
+      // TODO allow null instead of object?
+      path.replace(n_rows);
+      simdjson::ondemand::object object = safe_get_object(element.value(), path);
+
+      path.insert_dummy();
+      for (auto field : object) {
+        std::string key = safe_get_key(field);
+        path.replace(key);
+        if (this->cols.find(key) != cols.end()) {
+          (*this->cols[key]).add_value(field.value(), path);
+          this->key_found[key] = true;
+        }
+      }
+      path.drop();
+
+      for (auto& it : this->key_found) {
+        if (!it.second) {
+          (*this->cols[it.first]).add_default();
+        }
+        it.second = false;
+      }
+      n_rows++;
+    }
+    path.drop();
+
+    SEXP out = new_df(this->col_order, n_rows);
+
+    int i = 0;
+    for (std::string col : col_order) {
+      auto it = this->cols.find(col);
+      SET_VECTOR_ELT(out, i, (*(*it).second).get_value());
+      i++;
     }
 
     return out;

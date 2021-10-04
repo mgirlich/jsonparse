@@ -96,7 +96,7 @@ inline SEXP parse_homo_array<int>(simdjson::ondemand::value json, JSON_Path& pat
 
     int n = array.count_elements();
     SEXP out = PROTECT(Rf_allocVector(INTSXP, n));
-    int* pout = LOGICAL(out);
+    int* pout = INTEGER(out);
 
     int i = 0;
     path.insert_dummy();
