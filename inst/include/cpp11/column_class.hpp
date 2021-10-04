@@ -13,6 +13,7 @@ protected:
   int default_val;
   SEXP out;
   int* out_data;
+  bool added_value = false;
 public:
   Column_Scalar(int default_val) {
     this->default_val = default_val;
@@ -26,11 +27,16 @@ public:
   inline void add_value(simdjson::ondemand::value json, JSON_Path& path) {
     *this->out_data = parse_scalar_bool(json, path);
     ++this->out_data;
+    this->added_value = true;
   }
 
-  inline void add_default() {
-    *this->out_data = this->default_val;
-    ++this->out_data;
+  inline void finalize_row() {
+    if (this->added_value) {
+      this->added_value = false;
+    }  else {
+      *this->out_data = this->default_val;
+      ++this->out_data;
+    }
   }
 
   inline SEXP get_value() const {
@@ -45,6 +51,7 @@ protected:
   int default_val;
   SEXP out;
   int* out_data;
+  bool added_value = false;
 public:
   Column_Scalar(int default_val) {
     this->default_val = default_val;
@@ -58,11 +65,16 @@ public:
   inline void add_value(simdjson::ondemand::value json, JSON_Path& path) {
     *this->out_data = parse_scalar_int(json, path);
     ++this->out_data;
+    this->added_value = true;
   }
 
-  inline void add_default() {
-    *this->out_data = this->default_val;
-    ++this->out_data;
+  inline void finalize_row() {
+    if (this->added_value) {
+      this->added_value = false;
+    }  else {
+      *this->out_data = this->default_val;
+      ++this->out_data;
+    }
   }
 
   inline SEXP get_value() const {
@@ -77,6 +89,7 @@ protected:
   double default_val;
   SEXP out;
   double* out_data;
+  bool added_value = false;
 public:
   Column_Scalar(double default_val) {
     this->default_val = default_val;
@@ -90,11 +103,16 @@ public:
   inline void add_value(simdjson::ondemand::value json, JSON_Path& path) {
     *this->out_data = parse_scalar_double(json, path);
     ++this->out_data;
+    this->added_value = true;
   }
 
-  inline void add_default() {
-    *this->out_data = this->default_val;
-    ++this->out_data;
+  inline void finalize_row() {
+    if (this->added_value) {
+      this->added_value = false;
+    }  else {
+      *this->out_data = this->default_val;
+      ++this->out_data;
+    }
   }
 
   inline SEXP get_value() const {
@@ -109,6 +127,7 @@ protected:
   SEXP default_val;
   SEXP out;
   SEXP* out_data;
+  bool added_value = false;
 public:
   // TODO simplify constructor to just use SEXP
   Column_Scalar(std::string default_val) {
@@ -129,11 +148,16 @@ public:
     // TODO should this use SET_STRING_ELT
     *this->out_data = parse_scalar_string(json, path);
     ++this->out_data;
+    this->added_value = true;
   }
 
-  inline void add_default() {
-    *this->out_data = this->default_val;
-    ++this->out_data;
+  inline void finalize_row() {
+    if (this->added_value) {
+      this->added_value = false;
+    }  else {
+      *this->out_data = this->default_val;
+      ++this->out_data;
+    }
   }
 
   inline SEXP get_value() const {
@@ -149,6 +173,7 @@ protected:
   SEXP default_val;
   SEXP val;
   int i = 0;
+  bool added_value = false;
 public:
   Column_Vector(SEXP default_val) {
     this->default_val = default_val;
@@ -168,11 +193,16 @@ public:
       SET_VECTOR_ELT(this->val, this->i, vec);
     }
     this->i++;
+    this->added_value = true;
   }
 
-  inline void add_default() {
-    SET_VECTOR_ELT(this->val, this->i, this->default_val);
-    this->i++;
+  inline void finalize_row() {
+    if (this->added_value) {
+      this->added_value = false;
+    }  else {
+      SET_VECTOR_ELT(this->val, this->i, this->default_val);
+      this->i++;
+    }
   }
 
   inline SEXP get_value() const {
@@ -187,7 +217,7 @@ protected:
   std::unordered_map<std::string, bool> key_found;
   std::vector<std::string> col_order;
   int size = 0;
-
+  bool added_value = false;
 public:
   Column_Df(std::unordered_map<std::string, std::unique_ptr<Column>>& cols,
             std::vector<std::string> col_order) {
@@ -226,20 +256,25 @@ public:
 
     for (auto& it : this->key_found) {
       if (!it.second) {
-        (*this->val[it.first]).add_default();
+        (*this->val[it.first]).finalize_row();
       }
       it.second = false;
     }
 
     this->size++;
+    this->added_value = true;
   }
 
-  inline void add_default() {
-    for (auto& it : val) {
-      (*this->val[it.first]).add_default();
-    }
+  inline void finalize_row() {
+    if (this->added_value) {
+      this->added_value = false;
+    }  else {
+      for (auto& it : val) {
+        (*this->val[it.first]).finalize_row();
+      }
 
-    this->size++;
+      this->size++;
+    }
   }
 
   inline SEXP get_value() const {

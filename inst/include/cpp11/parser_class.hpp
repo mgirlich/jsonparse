@@ -19,8 +19,8 @@ public:
   // = 0 to declare the functions as pure virtual
   virtual inline void reserve(int n) = 0;
   virtual inline void add_value(simdjson::ondemand::value, JSON_Path& path) = 0;
+  virtual inline void finalize_row() = 0;
   virtual inline SEXP get_value() const = 0;
-  virtual inline void add_default() = 0;
 };
 
 class Parser {
@@ -137,7 +137,6 @@ public:
 class Parser_Dataframe : public virtual Parser{
 protected:
   std::unordered_map<std::string_view, std::unique_ptr<Column>> cols;
-  std::unordered_map<std::string_view, bool> key_found;
   std::vector<std::string> col_order;
   std::vector<std::unique_ptr<std::string>> string_view_protection;
 
@@ -146,9 +145,7 @@ public:
                    const std::vector<std::string> col_order) {
     for (auto & col : cols) {
       string_view_protection.push_back(std::make_unique<std::string>(col.first));
-      // string_view_protection.push_back(std::move(std::make_unique<std::string>(col.first)));
       this->cols.insert({*string_view_protection.back(), std::move(col.second)});
-      this->key_found[*string_view_protection.back()] = false;
     }
 
     this->col_order = col_order;
@@ -160,7 +157,6 @@ public:
     int size = array.count_elements();
     for (auto & col : this->cols) {
       (*this->cols[col.first]).reserve(size);
-      this->key_found[col.first] = false;
     }
 
     path.insert_dummy();
@@ -182,16 +178,12 @@ public:
         auto it = this->cols.find(key_v);
         if (it != cols.end()) {
           (*(*it).second).add_value(field.value(), path);
-          this->key_found[key_v] = true;
         }
       }
       path.drop();
 
-      for (auto& it : this->key_found) {
-        if (!it.second) {
-          (*this->cols[it.first]).add_default();
-        }
-        it.second = false;
+      for (auto& col : this->cols) {
+        (*col.second).finalize_row();
       }
       n_rows++;
     }
