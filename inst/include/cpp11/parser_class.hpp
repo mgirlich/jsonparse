@@ -179,9 +179,9 @@ public:
           cpp11::stop("Something went wrong with the key");
         }
 
-        if (this->cols.find(key_v) != cols.end()) {
-          path.replace(key_v);
-          (*this->cols[key_v]).add_value(field.value(), path);
+        auto it = this->cols.find(key_v);
+        if (it != cols.end()) {
+          (*(*it).second).add_value(field.value(), path);
           this->key_found[key_v] = true;
         }
       }
