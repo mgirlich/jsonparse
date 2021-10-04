@@ -41,6 +41,20 @@ public:
   }
 };
 
+template <>
+class JSON_Path_Element<std::string_view> : public virtual JSON_Path_Element_Base {
+private:
+  std::string_view key;
+public:
+  JSON_Path_Element<std::string_view>(const std::string_view & key) {
+    this->key = key;
+  }
+
+  const std::string to_path() {
+    return "/" + std::string(key);
+  }
+};
+
 class JSON_Path {
 private:
   std::vector<std::unique_ptr<JSON_Path_Element_Base>> path_elements;
@@ -53,6 +67,10 @@ public:
     path_elements.push_back(std::make_unique<JSON_Path_Element<std::string>>(key));
   }
 
+  void insert(const std::string_view key) {
+    path_elements.push_back(std::make_unique<JSON_Path_Element<std::string_view>>(key));
+  }
+
   void insert_dummy() {
     this->insert(-1);
   }
@@ -63,6 +81,10 @@ public:
 
   void replace(const std::string& key) {
     path_elements.back() = std::make_unique<JSON_Path_Element<std::string>>(key);
+  }
+
+  void replace(const std::string_view& key) {
+    path_elements.back() = std::make_unique<JSON_Path_Element<std::string_view>>(key);
   }
 
   void drop() {

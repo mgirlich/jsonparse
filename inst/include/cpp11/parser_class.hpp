@@ -136,21 +136,22 @@ public:
 
 class Parser_Dataframe : public virtual Parser{
 protected:
-  std::unordered_map<std::string, std::unique_ptr<Column>> cols;
-  std::unordered_map<std::string, bool> key_found;
+  std::unordered_map<std::string_view, std::unique_ptr<Column>> cols;
+  std::unordered_map<std::string_view, bool> key_found;
   std::vector<std::string> col_order;
+  std::vector<std::unique_ptr<std::string>> string_view_protection;
 
 public:
   Parser_Dataframe(std::unordered_map<std::string, std::unique_ptr<Column>>& cols,
-                   std::vector<std::string> col_order) {
+                   const std::vector<std::string> col_order) {
     for (auto & col : cols) {
-      this->cols.insert({col.first, std::move(col.second)});
-      this->key_found[col.first] = false;
+      string_view_protection.push_back(std::make_unique<std::string>(col.first));
+      // string_view_protection.push_back(std::move(std::make_unique<std::string>(col.first)));
+      this->cols.insert({*string_view_protection.back(), std::move(col.second)});
+      this->key_found[*string_view_protection.back()] = false;
     }
 
-    for (auto nm : col_order) {
-      this->col_order.push_back(nm);
-    }
+    this->col_order = col_order;
   };
 
   inline SEXP parse_json(simdjson::ondemand::value json, JSON_Path& path) {
@@ -171,11 +172,17 @@ public:
 
       path.insert_dummy();
       for (auto field : object) {
-        std::string key = safe_get_key(field);
-        path.replace(key);
-        if (this->cols.find(key) != cols.end()) {
-          (*this->cols[key]).add_value(field.value(), path);
-          this->key_found[key] = true;
+        std::string_view key_v;
+        auto error = field.unescaped_key().get(key_v);
+        if (error) {
+          // TODO when could this actually happen??
+          cpp11::stop("Something went wrong with the key");
+        }
+
+        if (this->cols.find(key_v) != cols.end()) {
+          path.replace(key_v);
+          (*this->cols[key_v]).add_value(field.value(), path);
+          this->key_found[key_v] = true;
         }
       }
       path.drop();
@@ -195,7 +202,9 @@ public:
     int i = 0;
     for (std::string col : col_order) {
       auto it = this->cols.find(col);
-      SET_VECTOR_ELT(out, i, (*(*it).second).get_value());
+      if (it != cols.end()) {
+        SET_VECTOR_ELT(out, i, (*(*it).second).get_value());
+      }
       i++;
     }
 
