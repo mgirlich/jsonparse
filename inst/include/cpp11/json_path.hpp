@@ -7,7 +7,7 @@ class JSON_Path_Element_Base {
 public:
   virtual ~JSON_Path_Element_Base() {};
 
-  virtual const std::string to_path() = 0;
+  virtual std::string to_path() const = 0;
 };
 
 template <typename T>
@@ -22,7 +22,7 @@ public:
     this->index = index;
   }
 
-  const std::string to_path() {
+  std::string to_path() const {
     return "[" + std::to_string(this->index) + "]";
   }
 };
@@ -36,7 +36,7 @@ public:
     this->key = key;
   }
 
-  const std::string to_path() {
+  std::string to_path() const {
     return "/" + key;
   }
 };
@@ -50,7 +50,7 @@ public:
     this->key = key;
   }
 
-  const std::string to_path() {
+  std::string to_path() const {
     return "/" + std::string(key);
   }
 };
@@ -91,7 +91,7 @@ public:
     path_elements.pop_back();
   }
 
-  const std::string path() {
+  std::string path() const {
     std::string out = "";
     for (auto & it : path_elements) {
       out += (*it).to_path();
