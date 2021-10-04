@@ -15,11 +15,11 @@ inline auto bad_json_type_message(simdjson::ondemand::value element, const std::
 // * C++ 11 doesn't support the auto return type
 inline int parse_scalar_bool(simdjson::ondemand::value element, JSON_Path& path) {
     switch (element.type()) {
-    case json_type::null:
-        return NA_LOGICAL;
-        break;
     case json_type::boolean:
         return bool(element) ? 1 : 0;
+        break;
+    case json_type::null:
+        return NA_LOGICAL;
         break;
     default:
         throw std::runtime_error(bad_json_type_message(element, "bool", path));
@@ -46,7 +46,7 @@ inline double parse_scalar_double(simdjson::ondemand::value element, JSON_Path& 
         return static_cast<double>(element);
         break;
     case json_type::null:
-        return static_cast<double>(NA_REAL);
+        return NA_REAL;
         break;
     default:
         throw std::runtime_error(bad_json_type_message(element, "double", path));
@@ -74,16 +74,20 @@ inline SEXP parse_homo_array<bool>(simdjson::ondemand::value json, JSON_Path& pa
     simdjson::ondemand::array array = safe_get_array(json, path);
 
     int n = array.count_elements();
-    SEXP val = PROTECT(Rf_allocVector(LGLSXP, n));
+    SEXP out = PROTECT(Rf_allocVector(LGLSXP, n));
+    int* pout = LOGICAL(out);
 
     int i = 0;
+    path.insert_dummy();
     for (auto element : array) {
-        SET_LOGICAL_ELT(val, i, parse_scalar_bool(element.value(), path));
-        i++;
+        path.replace(i++);
+        *pout = parse_scalar_bool(element.value(), path);
+        ++pout;
     }
+    path.drop();
 
     UNPROTECT(1);
-    return val;
+    return out;
 }
 
 template<>
@@ -91,16 +95,20 @@ inline SEXP parse_homo_array<int>(simdjson::ondemand::value json, JSON_Path& pat
     simdjson::ondemand::array array = safe_get_array(json, path);
 
     int n = array.count_elements();
-    SEXP val = PROTECT(Rf_allocVector(INTSXP, n));
+    SEXP out = PROTECT(Rf_allocVector(INTSXP, n));
+    int* pout = LOGICAL(out);
 
     int i = 0;
+    path.insert_dummy();
     for (auto element : array) {
-        SET_INTEGER_ELT(val, i, parse_scalar_int(element.value(), path));
-        i++;
+        path.replace(i++);
+        *pout = parse_scalar_int(element.value(), path);
+        ++pout;
     }
+    path.drop();
 
     UNPROTECT(1);
-    return val;
+    return out;
 }
 
 template<>
@@ -108,16 +116,20 @@ inline SEXP parse_homo_array<double>(simdjson::ondemand::value json, JSON_Path& 
     simdjson::ondemand::array array = safe_get_array(json, path);
 
     int n = array.count_elements();
-    SEXP val = PROTECT(Rf_allocVector(REALSXP, n));
+    SEXP out = PROTECT(Rf_allocVector(REALSXP, n));
+    double* pout = REAL(out);
 
     int i = 0;
+    path.insert_dummy();
     for (auto element : array) {
-        SET_REAL_ELT(val, i, parse_scalar_double(element.value(), path));
-        i++;
+        path.replace(i++);
+        *pout = parse_scalar_double(element.value(), path);
+        ++pout;
     }
+    path.drop();
 
     UNPROTECT(1);
-    return val;
+    return out;
 }
 
 template<>
@@ -125,14 +137,17 @@ inline SEXP parse_homo_array<std::string>(simdjson::ondemand::value json, JSON_P
     simdjson::ondemand::array array = safe_get_array(json, path);
 
     int n = array.count_elements();
-    SEXP val = PROTECT(Rf_allocVector(STRSXP, n));
+    SEXP out = PROTECT(Rf_allocVector(STRSXP, n));
 
     int i = 0;
+    path.insert_dummy();
     for (auto element : array) {
-        SET_STRING_ELT(val, i, parse_scalar_string(element.value(), path));
+        path.replace(i);
+        SET_STRING_ELT(out, i, parse_scalar_string(element.value(), path));
         i++;
     }
+    path.drop();
 
     UNPROTECT(1);
-    return val;
+    return out;
 }
