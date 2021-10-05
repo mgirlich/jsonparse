@@ -244,7 +244,7 @@ public:
   inline void add_value(simdjson::ondemand::value json, JSON_Path& path) {
     simdjson::ondemand::object object = safe_get_object(json, path);
 
-    path.insert_dummy(); // insert dummy so that we can always replace the path
+    path.insert_dummy<std::string_view>(); // insert dummy so that we can always replace the path
     for (auto field : object) {
       std::string_view key = safe_get_key(field);
 
