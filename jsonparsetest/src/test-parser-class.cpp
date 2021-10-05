@@ -271,4 +271,12 @@ context("Parser_Dataframe") {
     expect_true(strings(x_str_vec[1]) == writable::strings({NA_STRING, "abc"}));
     expect_true(strings(x_str_vec[2]) == strings({"x", "y", "z"}));
   }
+
+  // TODO should check error message
+  auto json1 = R"(  [{
+    "lgl": 1,
+  }]  )"_padded;
+  doc = parser.iterate(json1);
+  value = doc;
+  expect_error(parser_df.parse_json(value, path));
 }
