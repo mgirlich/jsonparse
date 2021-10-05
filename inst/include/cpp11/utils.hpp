@@ -44,7 +44,7 @@ inline SEXP new_df(std::vector<std::string> col_nms, int n_rows) {
     return out;
 }
 
-inline int name_to_index(std::vector<std::string> haystack, std::string needle) {
+inline int name_to_index(std::vector<std::string> haystack, std::string_view needle) {
     int index = 0;
     for (auto hay : haystack) {
         if (hay == needle) {

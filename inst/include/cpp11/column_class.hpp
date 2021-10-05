@@ -14,6 +14,7 @@ protected:
   SEXP out;
   int* out_data;
   bool added_value = false;
+
 public:
   Column_Scalar(int default_val) {
     this->default_val = default_val;
@@ -52,6 +53,7 @@ protected:
   SEXP out;
   int* out_data;
   bool added_value = false;
+
 public:
   Column_Scalar(int default_val) {
     this->default_val = default_val;
@@ -90,6 +92,7 @@ protected:
   SEXP out;
   double* out_data;
   bool added_value = false;
+
 public:
   Column_Scalar(double default_val) {
     this->default_val = default_val;
@@ -128,6 +131,7 @@ protected:
   SEXP out;
   SEXP* out_data;
   bool added_value = false;
+
 public:
   // TODO simplify constructor to just use SEXP
   Column_Scalar(std::string default_val) {
@@ -174,6 +178,7 @@ protected:
   SEXP val;
   int i = 0;
   bool added_value = false;
+
 public:
   Column_Vector(SEXP default_val) {
     this->default_val = default_val;
@@ -213,17 +218,18 @@ public:
 
 class Column_Df : public virtual Column {
 protected:
-  std::unordered_map<std::string, std::unique_ptr<Column>> val;
-  std::unordered_map<std::string, bool> key_found;
+  std::unordered_map<std::string_view, std::unique_ptr<Column>> val;
   std::vector<std::string> col_order;
+  std::vector<std::unique_ptr<std::string>> string_view_protection;
   int size = 0;
   bool added_value = false;
+
 public:
   Column_Df(std::unordered_map<std::string, std::unique_ptr<Column>>& cols,
             std::vector<std::string> col_order) {
     for (auto & col : cols) {
-      this->val.insert({col.first, std::move(col.second)});
-      this->key_found[col.first] = false;
+      this->string_view_protection.push_back(std::make_unique<std::string>(col.first));
+      this->val.insert({*string_view_protection.back(), std::move(col.second)});
     }
 
     this->col_order = col_order;
@@ -244,21 +250,17 @@ public:
       path.replace(row++);
 
       path.insert_dummy();
-      std::string key = safe_get_key(field);
+      std::string_view key = safe_get_key(field);
       if (this->val.find(key) != val.end()) {
         path.replace(key);
         (*this->val[key]).add_value(field.value(), path);
-        this->key_found[key] = true;
       }
       path.drop();
     }
     path.drop();
 
-    for (auto& it : this->key_found) {
-      if (!it.second) {
-        (*this->val[it.first]).finalize_row();
-      }
-      it.second = false;
+    for (auto& col : this->val) {
+      (*col.second).finalize_row();
     }
 
     this->size++;
