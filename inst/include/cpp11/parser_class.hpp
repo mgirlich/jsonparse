@@ -110,12 +110,14 @@ public:
     simdjson::ondemand::object object = safe_get_object(json, path);
     for (auto field : object) {
       std::string_view key = safe_get_key(field);
+
       auto it = this->fields.find(key);
       if (it != fields.end()) {
         path.replace(key);
         this->key_found[key] = true;
         int index = name_to_index(this->field_order, key);
-        SET_VECTOR_ELT(out, index, (*(*it).second).parse_json(field.value(), path));
+        auto value = (*(*it).second).parse_json(field.value(), path);
+        SET_VECTOR_ELT(out, index, value);
       }
     }
     path.drop();
@@ -154,8 +156,8 @@ public:
     simdjson::ondemand::array array = safe_get_array(json, path);
 
     int size = array.count_elements();
-    for (auto & col : this->cols) {
-      (*this->cols[col.first]).reserve(size);
+    for (auto& col : this->cols) {
+      (*col.second).reserve(size);
     }
 
     path.insert_dummy();
@@ -185,14 +187,9 @@ public:
     path.drop();
 
     SEXP out = new_df(this->col_order, n_rows);
-
-    int i = 0;
-    for (std::string col : col_order) {
-      auto it = this->cols.find(col);
-      if (it != cols.end()) {
-        SET_VECTOR_ELT(out, i, (*(*it).second).get_value());
-      }
-      i++;
+    for (auto& col : this->cols) {
+      int index = name_to_index(this->col_order, col.first);
+      SET_VECTOR_ELT(out, index, (*col.second).get_value());
     }
 
     return out;

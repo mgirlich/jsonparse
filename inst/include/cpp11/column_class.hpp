@@ -244,18 +244,16 @@ public:
   inline void add_value(simdjson::ondemand::value json, JSON_Path& path) {
     simdjson::ondemand::object object = safe_get_object(json, path);
 
-    int row = 0;
     path.insert_dummy(); // insert dummy so that we can always replace the path
     for (auto field : object) {
-      path.replace(row++);
-
-      path.insert_dummy();
       std::string_view key = safe_get_key(field);
-      if (this->val.find(key) != val.end()) {
+
+      auto it = this->val.find(key);
+      if (it != val.end()) {
         path.replace(key);
-        (*this->val[key]).add_value(field.value(), path);
+        (*(*it).second).add_value(field.value(), path);
       }
-      path.drop();
+
     }
     path.drop();
 
@@ -280,15 +278,10 @@ public:
   }
 
   inline SEXP get_value() const {
-    SEXP out = new_df(this->col_order, this->size);
-
-    int i = 0;
-    for (cpp11::r_string col : col_order) {
-      // TODO nicer solution
-      std::string col_string = std::string(col);
-      auto it = this->val.find(col_string);
-      SET_VECTOR_ELT(out, i, (*(*it).second).get_value());
-      i++;
+    SEXP out = new_df(this->col_order, size);
+    for (auto& col : this->val) {
+      int index = name_to_index(this->col_order, col.first);
+      SET_VECTOR_ELT(out, index, (*col.second).get_value());
     }
 
     return out;
