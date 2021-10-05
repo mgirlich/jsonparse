@@ -20,7 +20,7 @@ public:
   virtual inline void reserve(int n) = 0;
   virtual inline void add_value(simdjson::ondemand::value, JSON_Path& path) = 0;
   virtual inline void finalize_row() = 0;
-  virtual inline SEXP get_value() const = 0;
+  virtual inline SEXP get_value() = 0;
 };
 
 class Parser {

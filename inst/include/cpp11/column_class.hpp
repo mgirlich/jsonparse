@@ -46,7 +46,9 @@ public:
     }
   }
 
-  inline SEXP get_value() const {
+  inline SEXP get_value() {
+    UNPROTECT(1);
+    this->needs_unprotect = false;
     return this->out;
   }
 };
@@ -90,7 +92,9 @@ public:
     }
   }
 
-  inline SEXP get_value() const {
+  inline SEXP get_value() {
+    UNPROTECT(1);
+    this->needs_unprotect = false;
     return this->out;
   }
 };
@@ -134,7 +138,9 @@ public:
     }
   }
 
-  inline SEXP get_value() const {
+  inline SEXP get_value() {
+    UNPROTECT(1);
+    this->needs_unprotect = false;
     return this->out;
   }
 };
@@ -185,7 +191,9 @@ public:
     }
   }
 
-  inline SEXP get_value() const {
+  inline SEXP get_value() {
+    UNPROTECT(1);
+    this->needs_unprotect = false;
     return this->out;
   }
 };
@@ -236,7 +244,9 @@ public:
     }
   }
 
-  inline SEXP get_value() const {
+  inline SEXP get_value() {
+    UNPROTECT(1);
+    this->needs_unprotect = false;
     return this->val;
   }
 };
@@ -302,7 +312,7 @@ public:
     }
   }
 
-  inline SEXP get_value() const {
+  inline SEXP get_value() {
     SEXP out = PROTECT(new_df(this->col_order, size));
     for (auto& col : this->val) {
       int index = name_to_index(this->col_order, col.first);
@@ -320,6 +330,7 @@ protected:
   Parser_Dataframe df_parser;
   int current_row = 0;
   bool added_value = false;
+  bool needs_unprotect = false;
 
 public:
   // TODO what exactly is this syntax?
@@ -329,7 +340,7 @@ public:
   }
 
   ~Column_ListOfDf() {
-    UNPROTECT(1);
+    if (needs_unprotect) UNPROTECT(1);
   }
 
   inline void reserve(int n) {
@@ -352,7 +363,9 @@ public:
     }
   }
 
-  inline SEXP get_value() const {
+  inline SEXP get_value() {
+    UNPROTECT(1);
+    this->needs_unprotect = false;
     return this->val;
   }
 };
