@@ -155,6 +155,12 @@ public:
   };
 
   inline SEXP parse_json(simdjson::ondemand::value json, JSON_Path& path) {
+    // TODO should `null` be allowed? What should be returned? empty tibble? or `NULL`
+    // TODO should an empty object be allowed?
+    if (json.type() == simdjson::ondemand::json_type::null) {
+      return R_NilValue;
+    }
+
     simdjson::ondemand::array array = safe_get_array(json, path);
 
     int size = array.count_elements();
