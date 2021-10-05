@@ -6,7 +6,7 @@
 context("json_path") {
   test_that("can create a path") {
     auto path = JSON_Path();
-    path.insert("a");
+    path.insert(std::string_view("a"));
     expect_true(path.path() == "/a");
 
     path.insert(1);

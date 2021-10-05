@@ -7,7 +7,7 @@ class JSON_Path_Element_Base {
 public:
   virtual ~JSON_Path_Element_Base() {};
 
-  virtual const std::string to_path() = 0;
+  virtual std::string to_path() const = 0;
 };
 
 template <typename T>
@@ -22,7 +22,7 @@ public:
     this->index = index;
   }
 
-  const std::string to_path() {
+  std::string to_path() const {
     return "[" + std::to_string(this->index) + "]";
   }
 };
@@ -36,8 +36,22 @@ public:
     this->key = key;
   }
 
-  const std::string to_path() {
+  std::string to_path() const {
     return "/" + key;
+  }
+};
+
+template <>
+class JSON_Path_Element<std::string_view> : public virtual JSON_Path_Element_Base {
+private:
+  std::string_view key;
+public:
+  JSON_Path_Element<std::string_view>(const std::string_view & key) {
+    this->key = key;
+  }
+
+  std::string to_path() const {
+    return "/" + std::string(key);
   }
 };
 
@@ -53,6 +67,10 @@ public:
     path_elements.push_back(std::make_unique<JSON_Path_Element<std::string>>(key));
   }
 
+  void insert(const std::string_view key) {
+    path_elements.push_back(std::make_unique<JSON_Path_Element<std::string_view>>(key));
+  }
+
   void insert_dummy() {
     this->insert(-1);
   }
@@ -65,11 +83,15 @@ public:
     path_elements.back() = std::make_unique<JSON_Path_Element<std::string>>(key);
   }
 
+  void replace(const std::string_view& key) {
+    path_elements.back() = std::make_unique<JSON_Path_Element<std::string_view>>(key);
+  }
+
   void drop() {
     path_elements.pop_back();
   }
 
-  const std::string path() {
+  std::string path() const {
     std::string out = "";
     for (auto & it : path_elements) {
       out += (*it).to_path();
