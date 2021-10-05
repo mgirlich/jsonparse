@@ -177,6 +177,7 @@ public:
 
         auto it = this->cols.find(key_v);
         if (it != cols.end()) {
+          path.replace(key_v);
           (*(*it).second).add_value(field.value(), path);
         }
       }
