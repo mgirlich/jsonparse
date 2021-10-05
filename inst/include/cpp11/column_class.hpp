@@ -14,6 +14,7 @@ protected:
   SEXP out;
   int* out_data;
   bool added_value = false;
+  bool needs_unprotect = false;
 
 public:
   Column_Scalar(int default_val) {
@@ -21,12 +22,13 @@ public:
   }
 
   ~Column_Scalar() {
-    UNPROTECT(1);
+    if (needs_unprotect) UNPROTECT(1);
   }
 
   inline void reserve(int n) {
     this->out = PROTECT(Rf_allocVector(LGLSXP, n));
     this->out_data = LOGICAL(out);
+    this->needs_unprotect = true;
   }
 
   inline void add_value(simdjson::ondemand::value json, JSON_Path& path) {
@@ -56,6 +58,7 @@ protected:
   SEXP out;
   int* out_data;
   bool added_value = false;
+  bool needs_unprotect = false;
 
 public:
   Column_Scalar(int default_val) {
@@ -63,12 +66,13 @@ public:
   }
 
   ~Column_Scalar() {
-    UNPROTECT(1);
+    if (needs_unprotect) UNPROTECT(1);
   }
 
   inline void reserve(int n) {
     this->out = PROTECT(Rf_allocVector(INTSXP, n));
     this->out_data = INTEGER(out);
+    this->needs_unprotect = true;
   }
 
   inline void add_value(simdjson::ondemand::value json, JSON_Path& path) {
@@ -98,6 +102,7 @@ protected:
   SEXP out;
   double* out_data;
   bool added_value = false;
+  bool needs_unprotect = false;
 
 public:
   Column_Scalar(double default_val) {
@@ -105,12 +110,13 @@ public:
   }
 
   ~Column_Scalar() {
-    UNPROTECT(1);
+    if (needs_unprotect) UNPROTECT(1);
   }
 
   inline void reserve(int n) {
     this->out = PROTECT(Rf_allocVector(REALSXP, n));
     this->out_data = REAL(out);
+    this->needs_unprotect = true;
   }
 
   inline void add_value(simdjson::ondemand::value json, JSON_Path& path) {
@@ -140,6 +146,7 @@ protected:
   SEXP out;
   SEXP* out_data;
   bool added_value = false;
+  bool needs_unprotect = false;
 
 public:
   // TODO simplify constructor to just use SEXP
@@ -153,12 +160,13 @@ public:
   }
 
   ~Column_Scalar() {
-    UNPROTECT(1);
+    if (needs_unprotect) UNPROTECT(1);
   }
 
   inline void reserve(int n) {
     this->out = PROTECT(Rf_allocVector(STRSXP, n));
     this->out_data = STRING_PTR(out);
+    this->needs_unprotect = true;
   }
 
   inline void add_value(simdjson::ondemand::value json, JSON_Path& path) {
@@ -190,6 +198,7 @@ protected:
   SEXP val;
   int i = 0;
   bool added_value = false;
+  bool needs_unprotect = false;
 
 public:
   Column_Vector(SEXP default_val) {
@@ -197,12 +206,13 @@ public:
   }
 
   ~Column_Vector() {
-    UNPROTECT(1);
+    if (needs_unprotect) UNPROTECT(1);
   }
 
   inline void reserve(int n) {
     this->val = PROTECT(Rf_allocVector(VECSXP, n));
     this->i = 0;
+    this->needs_unprotect = true;
   }
 
   inline void add_value(simdjson::ondemand::value json, JSON_Path& path) {
