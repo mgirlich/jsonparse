@@ -78,7 +78,7 @@ inline SEXP parse_homo_array<bool>(simdjson::ondemand::value json, JSON_Path& pa
     int* pout = LOGICAL(out);
 
     int i = 0;
-    path.insert_dummy();
+    path.insert_dummy<int>();
     for (auto element : array) {
         path.replace(i++);
         *pout = parse_scalar_bool(element.value(), path);
@@ -99,7 +99,7 @@ inline SEXP parse_homo_array<int>(simdjson::ondemand::value json, JSON_Path& pat
     int* pout = INTEGER(out);
 
     int i = 0;
-    path.insert_dummy();
+    path.insert_dummy<int>();
     for (auto element : array) {
         path.replace(i++);
         *pout = parse_scalar_int(element.value(), path);
@@ -120,7 +120,7 @@ inline SEXP parse_homo_array<double>(simdjson::ondemand::value json, JSON_Path& 
     double* pout = REAL(out);
 
     int i = 0;
-    path.insert_dummy();
+    path.insert_dummy<int>();
     for (auto element : array) {
         path.replace(i++);
         *pout = parse_scalar_double(element.value(), path);
@@ -140,7 +140,7 @@ inline SEXP parse_homo_array<std::string>(simdjson::ondemand::value json, JSON_P
     SEXP out = PROTECT(Rf_allocVector(STRSXP, n));
 
     int i = 0;
-    path.insert_dummy();
+    path.insert_dummy<int>();
     for (auto element : array) {
         path.replace(i);
         SET_STRING_ELT(out, i, parse_scalar_string(element.value(), path));

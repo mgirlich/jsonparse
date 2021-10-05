@@ -104,9 +104,9 @@ public:
       it.second = false;
     }
 
-    SEXP out = new_named_list(field_order);
+    SEXP out = PROTECT(new_named_list(field_order));
 
-    path.insert_dummy(); // insert dummy so that we can always replace the path
+    path.insert_dummy<std::string_view>(); // insert dummy so that we can always replace the path
     simdjson::ondemand::object object = safe_get_object(json, path);
     for (auto field : object) {
       std::string_view key = safe_get_key(field);
@@ -129,6 +129,7 @@ public:
       }
     }
 
+    UNPROTECT(1);
     return out;
   }
 };
@@ -140,6 +141,7 @@ protected:
   std::unordered_map<std::string_view, std::unique_ptr<Column>> cols;
   std::vector<std::string> col_order;
   std::vector<std::unique_ptr<std::string>> string_view_protection;
+  int current_row = 0;
 
 public:
   Parser_Dataframe(std::unordered_map<std::string, std::unique_ptr<Column>>& cols,
@@ -160,14 +162,14 @@ public:
       (*col.second).reserve(size);
     }
 
-    path.insert_dummy();
-    int n_rows = 0;
+    path.insert_dummy<int>();
+    this->current_row = 0;
     for (auto element : array) {
+      path.replace(this->current_row);
       // TODO allow null instead of object?
-      path.replace(n_rows);
       simdjson::ondemand::object object = safe_get_object(element.value(), path);
 
-      path.insert_dummy();
+      path.insert_dummy<std::string_view>();
       for (auto field : object) {
         std::string_view key = safe_get_key(field);
 
@@ -182,16 +184,17 @@ public:
       for (auto& col : this->cols) {
         (*col.second).finalize_row();
       }
-      n_rows++;
+      this->current_row++;
     }
     path.drop();
 
-    SEXP out = new_df(this->col_order, n_rows);
+    SEXP out = PROTECT(new_df(this->col_order, size));
     for (auto& col : this->cols) {
       int index = name_to_index(this->col_order, col.first);
       SET_VECTOR_ELT(out, index, (*col.second).get_value());
     }
 
+    UNPROTECT(1);
     return out;
   }
 };
