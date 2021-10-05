@@ -28,13 +28,13 @@ context("Parser_Scalar") {
   auto path = JSON_Path();
 
   test_that("can parse a scalar bool") {
-    path.insert("lgl_true");
+    path.insert(std::string_view("lgl_true"));
     expect_true(parser_lgl.parse_json(doc["lgl_true"].value(), path) == as_sexp(true));
 
-    path.replace("lgl_false");
+    path.replace(std::string_view("lgl_false"));
     expect_true(parser_lgl.parse_json(doc["lgl_false"].value(), path) == as_sexp(false));
 
-    path.replace("lgl_null");
+    path.replace(std::string_view("lgl_null"));
     expect_true(parser_lgl.parse_json(doc["lgl_null"].value(), path) == Rf_ScalarLogical(NA_LOGICAL));
   }
 
