@@ -79,24 +79,23 @@ public:
 
 class Parser_Object : public virtual Parser{
 protected:
-  std::unordered_map<std::string, std::unique_ptr<Parser>> fields;
-  std::unordered_map<std::string, SEXP> default_values;
-  std::unordered_map<std::string, bool> key_found;
+  std::unordered_map<std::string_view, std::unique_ptr<Parser>> fields;
+  std::unordered_map<std::string_view, SEXP> default_values;
+  std::unordered_map<std::string_view, bool> key_found;
   std::vector<std::string> field_order;
+  std::vector<std::unique_ptr<std::string>> string_view_protection;
 
 public:
   Parser_Object(std::unordered_map<std::string, std::unique_ptr<Parser>>& fields,
                 std::unordered_map<std::string, SEXP>& default_values,
                 std::vector<std::string> field_order) {
-    this->default_values = default_values;
+    this->field_order = field_order;
 
-    for (cpp11::r_string nm : field_order) {
-      this->field_order.push_back(std::string(nm));
-    }
-
-    for (auto & field : fields) {
-      this->fields.insert({field.first, std::move(field.second)});
-      this->key_found[field.first] = false;
+    for (std::string& field_name : field_order) {
+      this->string_view_protection.push_back(std::make_unique<std::string>(field_name));
+      this->fields.insert({*string_view_protection.back(), std::move(fields[field_name])});
+      this->default_values.insert({*string_view_protection.back(), std::move(default_values[field_name])});
+      this->key_found.insert({*string_view_protection.back(), false});
     }
   };
 
@@ -110,13 +109,15 @@ public:
     path.insert_dummy(); // insert dummy so that we can always replace the path
     simdjson::ondemand::object object = safe_get_object(json, path);
     for (auto field : object) {
-      std::string key = safe_get_key(field);
-      if (this->fields.find(key) != fields.end()) {
-        path.replace(key);
+      std::string_view key = safe_get_key(field);
 
+      auto it = this->fields.find(key);
+      if (it != fields.end()) {
+        path.replace(key);
         this->key_found[key] = true;
         int index = name_to_index(this->field_order, key);
-        SET_VECTOR_ELT(out, index, (*this->fields[key]).parse_json(field.value(), path));
+        auto value = (*(*it).second).parse_json(field.value(), path);
+        SET_VECTOR_ELT(out, index, value);
       }
     }
     path.drop();
@@ -144,7 +145,7 @@ public:
   Parser_Dataframe(std::unordered_map<std::string, std::unique_ptr<Column>>& cols,
                    const std::vector<std::string> col_order) {
     for (auto & col : cols) {
-      string_view_protection.push_back(std::make_unique<std::string>(col.first));
+      this->string_view_protection.push_back(std::make_unique<std::string>(col.first));
       this->cols.insert({*string_view_protection.back(), std::move(col.second)});
     }
 
@@ -155,8 +156,8 @@ public:
     simdjson::ondemand::array array = safe_get_array(json, path);
 
     int size = array.count_elements();
-    for (auto & col : this->cols) {
-      (*this->cols[col.first]).reserve(size);
+    for (auto& col : this->cols) {
+      (*col.second).reserve(size);
     }
 
     path.insert_dummy();
@@ -168,16 +169,11 @@ public:
 
       path.insert_dummy();
       for (auto field : object) {
-        std::string_view key_v;
-        auto error = field.unescaped_key().get(key_v);
-        if (error) {
-          // TODO when could this actually happen??
-          cpp11::stop("Something went wrong with the key");
-        }
+        std::string_view key = safe_get_key(field);
 
-        auto it = this->cols.find(key_v);
+        auto it = this->cols.find(key);
         if (it != cols.end()) {
-          path.replace(key_v);
+          path.replace(key);
           (*(*it).second).add_value(field.value(), path);
         }
       }
@@ -191,14 +187,9 @@ public:
     path.drop();
 
     SEXP out = new_df(this->col_order, n_rows);
-
-    int i = 0;
-    for (std::string col : col_order) {
-      auto it = this->cols.find(col);
-      if (it != cols.end()) {
-        SET_VECTOR_ELT(out, i, (*(*it).second).get_value());
-      }
-      i++;
+    for (auto& col : this->cols) {
+      int index = name_to_index(this->col_order, col.first);
+      SET_VECTOR_ELT(out, index, (*col.second).get_value());
     }
 
     return out;

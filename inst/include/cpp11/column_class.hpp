@@ -14,6 +14,7 @@ protected:
   SEXP out;
   int* out_data;
   bool added_value = false;
+
 public:
   Column_Scalar(int default_val) {
     this->default_val = default_val;
@@ -52,6 +53,7 @@ protected:
   SEXP out;
   int* out_data;
   bool added_value = false;
+
 public:
   Column_Scalar(int default_val) {
     this->default_val = default_val;
@@ -90,6 +92,7 @@ protected:
   SEXP out;
   double* out_data;
   bool added_value = false;
+
 public:
   Column_Scalar(double default_val) {
     this->default_val = default_val;
@@ -128,6 +131,7 @@ protected:
   SEXP out;
   SEXP* out_data;
   bool added_value = false;
+
 public:
   // TODO simplify constructor to just use SEXP
   Column_Scalar(std::string default_val) {
@@ -174,6 +178,7 @@ protected:
   SEXP val;
   int i = 0;
   bool added_value = false;
+
 public:
   Column_Vector(SEXP default_val) {
     this->default_val = default_val;
@@ -213,17 +218,18 @@ public:
 
 class Column_Df : public virtual Column {
 protected:
-  std::unordered_map<std::string, std::unique_ptr<Column>> val;
-  std::unordered_map<std::string, bool> key_found;
+  std::unordered_map<std::string_view, std::unique_ptr<Column>> val;
   std::vector<std::string> col_order;
+  std::vector<std::unique_ptr<std::string>> string_view_protection;
   int size = 0;
   bool added_value = false;
+
 public:
   Column_Df(std::unordered_map<std::string, std::unique_ptr<Column>>& cols,
             std::vector<std::string> col_order) {
     for (auto & col : cols) {
-      this->val.insert({col.first, std::move(col.second)});
-      this->key_found[col.first] = false;
+      this->string_view_protection.push_back(std::make_unique<std::string>(col.first));
+      this->val.insert({*string_view_protection.back(), std::move(col.second)});
     }
 
     this->col_order = col_order;
@@ -238,27 +244,21 @@ public:
   inline void add_value(simdjson::ondemand::value json, JSON_Path& path) {
     simdjson::ondemand::object object = safe_get_object(json, path);
 
-    int row = 0;
     path.insert_dummy(); // insert dummy so that we can always replace the path
     for (auto field : object) {
-      path.replace(row++);
+      std::string_view key = safe_get_key(field);
 
-      path.insert_dummy();
-      std::string key = safe_get_key(field);
-      if (this->val.find(key) != val.end()) {
+      auto it = this->val.find(key);
+      if (it != val.end()) {
         path.replace(key);
-        (*this->val[key]).add_value(field.value(), path);
-        this->key_found[key] = true;
+        (*(*it).second).add_value(field.value(), path);
       }
-      path.drop();
+
     }
     path.drop();
 
-    for (auto& it : this->key_found) {
-      if (!it.second) {
-        (*this->val[it.first]).finalize_row();
-      }
-      it.second = false;
+    for (auto& col : this->val) {
+      (*col.second).finalize_row();
     }
 
     this->size++;
@@ -278,15 +278,10 @@ public:
   }
 
   inline SEXP get_value() const {
-    SEXP out = new_df(this->col_order, this->size);
-
-    int i = 0;
-    for (cpp11::r_string col : col_order) {
-      // TODO nicer solution
-      std::string col_string = std::string(col);
-      auto it = this->val.find(col_string);
-      SET_VECTOR_ELT(out, i, (*(*it).second).get_value());
-      i++;
+    SEXP out = new_df(this->col_order, size);
+    for (auto& col : this->val) {
+      int index = name_to_index(this->col_order, col.first);
+      SET_VECTOR_ELT(out, index, (*col.second).get_value());
     }
 
     return out;

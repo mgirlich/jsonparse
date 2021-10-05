@@ -50,7 +50,7 @@ inline simdjson::ondemand::object safe_get_object(simdjson::ondemand::value json
   return object;
 }
 
-inline std::string safe_get_key(simdjson::simdjson_result<simdjson::ondemand::field> field) {
+inline std::string_view safe_get_key(simdjson::simdjson_result<simdjson::ondemand::field> field) {
   std::string_view key_v;
   auto error = field.unescaped_key().get(key_v);
   if (error) {
@@ -58,5 +58,5 @@ inline std::string safe_get_key(simdjson::simdjson_result<simdjson::ondemand::fi
     cpp11::stop("Something went wrong with the key");
   }
 
-  return std::string(key_v);
+  return key_v;
 }
