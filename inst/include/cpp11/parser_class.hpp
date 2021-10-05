@@ -104,7 +104,7 @@ public:
       it.second = false;
     }
 
-    SEXP out = new_named_list(field_order);
+    SEXP out = PROTECT(new_named_list(field_order));
 
     path.insert_dummy<std::string_view>(); // insert dummy so that we can always replace the path
     simdjson::ondemand::object object = safe_get_object(json, path);
@@ -129,6 +129,7 @@ public:
       }
     }
 
+    UNPROTECT(1);
     return out;
   }
 };
@@ -187,12 +188,13 @@ public:
     }
     path.drop();
 
-    SEXP out = new_df(this->col_order, n_rows);
+    SEXP out = PROTECT(new_df(this->col_order, size));
     for (auto& col : this->cols) {
       int index = name_to_index(this->col_order, col.first);
       SET_VECTOR_ELT(out, index, (*col.second).get_value());
     }
 
+    UNPROTECT(1);
     return out;
   }
 };

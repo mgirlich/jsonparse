@@ -20,6 +20,10 @@ public:
     this->default_val = default_val;
   }
 
+  ~Column_Scalar() {
+    UNPROTECT(1);
+  }
+
   inline void reserve(int n) {
     this->out = PROTECT(Rf_allocVector(LGLSXP, n));
     this->out_data = LOGICAL(out);
@@ -41,7 +45,6 @@ public:
   }
 
   inline SEXP get_value() const {
-    UNPROTECT(1);
     return this->out;
   }
 };
@@ -57,6 +60,10 @@ protected:
 public:
   Column_Scalar(int default_val) {
     this->default_val = default_val;
+  }
+
+  ~Column_Scalar() {
+    UNPROTECT(1);
   }
 
   inline void reserve(int n) {
@@ -80,7 +87,6 @@ public:
   }
 
   inline SEXP get_value() const {
-    UNPROTECT(1);
     return this->out;
   }
 };
@@ -96,6 +102,10 @@ protected:
 public:
   Column_Scalar(double default_val) {
     this->default_val = default_val;
+  }
+
+  ~Column_Scalar() {
+    UNPROTECT(1);
   }
 
   inline void reserve(int n) {
@@ -119,7 +129,6 @@ public:
   }
 
   inline SEXP get_value() const {
-    UNPROTECT(1);
     return this->out;
   }
 };
@@ -141,6 +150,10 @@ public:
     } else {
       this->default_val = Rf_mkChar(std::string(default_val).c_str());
     }
+  }
+
+  ~Column_Scalar() {
+    UNPROTECT(1);
   }
 
   inline void reserve(int n) {
@@ -165,7 +178,6 @@ public:
   }
 
   inline SEXP get_value() const {
-    UNPROTECT(1);
     return this->out;
   }
 };
@@ -182,6 +194,10 @@ protected:
 public:
   Column_Vector(SEXP default_val) {
     this->default_val = default_val;
+  }
+
+  ~Column_Vector() {
+    UNPROTECT(1);
   }
 
   inline void reserve(int n) {
@@ -211,7 +227,6 @@ public:
   }
 
   inline SEXP get_value() const {
-    UNPROTECT(1);
     return this->val;
   }
 };
@@ -278,12 +293,13 @@ public:
   }
 
   inline SEXP get_value() const {
-    SEXP out = new_df(this->col_order, size);
+    SEXP out = PROTECT(new_df(this->col_order, size));
     for (auto& col : this->val) {
       int index = name_to_index(this->col_order, col.first);
       SET_VECTOR_ELT(out, index, (*col.second).get_value());
     }
 
+    UNPROTECT(1);
     return out;
   }
 };
