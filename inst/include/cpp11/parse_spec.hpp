@@ -60,6 +60,9 @@ std::pair<std::unordered_map<std::string, std::unique_ptr<Column>>, std::vector<
         } else if (type == "df") {
             auto spec_info = parse_sub_spec(element["fields"]);
             fields[key] = std::make_unique<Column_Df>(spec_info.first, spec_info.second);
+        } else if (type == "df_vec") {
+            auto spec_info = parse_sub_spec(element["fields"]);
+            fields[key] = std::make_unique<Column_ListOfDf>(spec_info.first, spec_info.second);
         } else {
             cpp11::message(type);
             cpp11::stop("Unsupported type!");

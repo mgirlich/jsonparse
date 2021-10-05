@@ -313,3 +313,46 @@ public:
     return out;
   }
 };
+
+class Column_ListOfDf : public virtual Column {
+protected:
+  SEXP val;
+  Parser_Dataframe df_parser;
+  int current_row = 0;
+  bool added_value = false;
+
+public:
+  // TODO what exactly is this syntax?
+  // https://stackoverflow.com/a/43306073
+  Column_ListOfDf(std::unordered_map<std::string, std::unique_ptr<Column>>& list_element,
+                  std::vector<std::string> col_order) : df_parser(list_element, col_order) {
+  }
+
+  ~Column_ListOfDf() {
+    UNPROTECT(1);
+  }
+
+  inline void reserve(int n) {
+    this->val = PROTECT(Rf_allocVector(VECSXP, n));
+    this->current_row = 0;
+  }
+
+  inline void add_value(simdjson::ondemand::value json, JSON_Path& path) {
+    SET_VECTOR_ELT(this->val, this->current_row, this->df_parser.parse_json(json, path));
+    this->current_row++;
+    this->added_value = true;
+  }
+
+  inline void finalize_row() {
+    if (this->added_value) {
+      this->added_value = false;
+    } else {
+      SET_VECTOR_ELT(this->val, this->current_row, R_NilValue);
+      this->current_row++;
+    }
+  }
+
+  inline SEXP get_value() const {
+    return this->val;
+  }
+};
